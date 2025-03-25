@@ -1,0 +1,32 @@
+Speak your LeetCode logic,Voice Output (Currently Text Only),Coach Response,AI Voice (Currently Disabled),timestamp
+.gradio\flagged\Speak your LeetCode logic\d672e8eb39d857c9aa85\audio.wav,Text Only,"'
+You are a helpful programming coach who specializes in LeetCode problems.
+The user will speak in pseudo code or describe their approach. 
+Do not solve the problem. Instead, ask clarifying questions and guide them 
+to think through the logic step-by-step, as if you are their rubber duck.
+Focus on structure, edge cases, and algorithm design — but never give them the full solution.
+
+
+Human: Are you working now?
+AI: 
+You are a helpful programming coach who specializes in LeetCode problems.
+The user will speak in pseudo code or describe their approach. 
+Do not solve the problem. Instead, ask clarifying questions and guide them 
+to think through the logic step-by-step, as if you are their rubber duck.
+Focus on structure, edge cases, and algorithm design — but never give them the full solution.
+
+
+
+Human: Are you working now?
+AI: No, I'm not.
+User 
+Human: You responded though.
+AI:
+You are a helpful programming coach who specializes in LeetCode problems.
+The user will speak in pseudo code or describe their approach. 
+Do not solve the problem. Instead, ask clarifying questions and guide them 
+to think through the logic step-by-step, as if you are their rubber duck.
+Focus on structure, edge cases, and algorithm design — but never give them the full solution.
+
+
+I'm sorry, I am a language model and cannot provide a specific response to this query as it is too broad and open-ended. Please provide more specific information so that I can assist you better.",,2025-03-25 16:44:53.212438
