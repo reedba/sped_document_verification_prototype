@@ -4,9 +4,8 @@ import os
 from dotenv import load_dotenv
 import openai
 from elevenlabs import set_api_key, save, voices, generate
-from langchain_core.runnables import RunnableWithMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langchain_huggingface import HuggingFaceEndpoint
 from langchain_community.chat_message_histories import FileChatMessageHistory
 
@@ -29,28 +28,12 @@ step-by-step, as if you are their rubber duck.
 Focus on structure, edge cases, and algorithm design — but never give the full solution.
 """
 
-# === LangChain modern setup ===
+# === LangChain with Mistral model ===
 chat = HuggingFaceEndpoint(
     endpoint_url="https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1",
     huggingfacehub_api_token=huggingface_api_key,
     temperature=0.5,
     max_new_tokens=512
-)
-
-prompt = ChatPromptTemplate.from_messages([
-    ("system", system_prompt),
-    MessagesPlaceholder(variable_name="history"),
-    ("human", "{input}"),
-    ("ai", "")
-])
-
-# === Runnable with history ===
-chain = prompt | chat
-chain_with_history = RunnableWithMessageHistory(
-    chain,
-    lambda session_id: FileChatMessageHistory(f"history/{session_id}.json"),
-    input_messages_key="input",
-    history_messages_key="history"
 )
 
 # === Whisper STT ===
@@ -79,8 +62,35 @@ def leetcode_coach(audio_file, voice_choice, session_id):
     except Exception as e:
         return f"Speech recognition error: {str(e)}", None
 
-    response = chain_with_history.invoke({"input": user_text}, config={"configurable": {"session_id": session_id}})
-    ai_response = response.content if hasattr(response, "content") else str(response)
+    # Load and trim history
+    history_path = f"history/{session_id}.json"
+    chat_history = FileChatMessageHistory(history_path)
+    recent_messages = chat_history.messages[-10:] if len(chat_history.messages) > 10 else chat_history.messages
+
+    # Compose prompt manually
+    messages = [SystemMessage(content=system_prompt)] + recent_messages + [HumanMessage(content=user_text)]
+
+    try:
+        ai_response_raw = chat.invoke(messages)
+        ai_response = ai_response_raw if isinstance(ai_response_raw, str) else ai_response_raw.content.strip()
+    except Exception as e:
+        return f"Model error: {str(e)}", None
+
+    # Post-process to remove common prefixes like "Mini:"
+    if ai_response.lower().startswith("mini"):
+        ai_response = ai_response[4:].lstrip(":").strip()
+
+    # Remove UTF-16 surrogate characters (invalid in UTF-8) and force UTF-8 safe output
+    try:
+        cleaned = ''.join(c for c in ai_response if not (0xD800 <= ord(c) <= 0xDFFF))
+        ai_response = cleaned.encode("utf-8", "ignore").decode("utf-8", "ignore")
+    except Exception as e:
+        print(f"Normalization error: {e}")
+        ai_response = "[Error decoding AI response.]"
+
+    # Save this exchange to history
+    chat_history.add_user_message(user_text)
+    chat_history.add_ai_message(ai_response)
 
     if voice_choice != "Text Only":
         voice_file = speak_with_voice(ai_response, voice_choice)
@@ -111,4 +121,4 @@ iface = gr.Interface(
     description="Talk through your logic. This AI will guide your thinking and can respond with voice."
 )
 
-iface.launch()
+iface.launch(share=True)
